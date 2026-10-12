@@ -1,4 +1,3 @@
-using UnityEditor.Tilemaps;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -6,19 +5,25 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movimiento")]
     [SerializeField] private float moveSpeed = 5f;
 
-    private Rigidbody2D rb; 
+    public bool canMove = true;
+
+    private Rigidbody2D rb;
     private float moveInput;
     private bool facingRight = true;
 
-
     private void Awake()
     {
-        rb = GetComponent <Rigidbody2D>();
-
+        rb = GetComponent<Rigidbody2D>();
     }
 
-  private void Update()
+    private void Update()
     {
+        if (!canMove)
+        {
+            moveInput = 0f;
+            return;
+        }
+
         moveInput = Input.GetAxisRaw("Horizontal");
 
         if (moveInput > 0 && !facingRight)
@@ -44,4 +49,4 @@ public class PlayerMovement : MonoBehaviour
         scale.x *= -1;
         transform.localScale = scale;
     }
-}  
+}
