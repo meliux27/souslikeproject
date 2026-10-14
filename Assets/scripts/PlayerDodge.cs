@@ -32,9 +32,7 @@ public class PlayerDodge : MonoBehaviour
 
     private void Update()
     {
-        bool dodgePressed = Input.GetKeyDown(KeyCode.LeftShift)
-                         || Input.GetKeyDown(KeyCode.Space)
-                         || Input.GetMouseButtonDown(1);
+        bool dodgePressed = Input.GetKeyDown(KeyCode.LeftShift);
 
         if (dodgePressed && !isDodging && movement.canMove && Time.time >= nextDodgeTime)
         {
@@ -48,10 +46,9 @@ public class PlayerDodge : MonoBehaviour
     private IEnumerator Dodge()
     {
         isDodging = true;
-        movement.canMove = false;   // no caminar ni atacar mientras ruedas
-        movement.isDodging = true;  // PlayerMovement deja de controlar la velocidad
+        movement.canMove = false;   
+        movement.isDodging = true;  
 
-        // Dirección: la tecla que mantengas; si no pulsas ninguna, hacia donde miras
         float direction = Input.GetAxisRaw("Horizontal");
         if (direction == 0f)
         {
@@ -59,7 +56,6 @@ public class PlayerDodge : MonoBehaviour
         }
         movement.FaceDirection(direction);
 
-        // Empieza la invulnerabilidad y el efecto visual (semitransparente)
         health.IsInvulnerable = true;
         SetAlpha(0.4f);
 
@@ -68,7 +64,6 @@ public class PlayerDodge : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(direction * dodgeSpeed, rb.linearVelocity.y);
 
-            // Termina la invulnerabilidad antes del final del rodar (ventana de riesgo)
             if (health.IsInvulnerable && timer >= invulnerableDuration)
             {
                 health.IsInvulnerable = false;
@@ -76,10 +71,9 @@ public class PlayerDodge : MonoBehaviour
             }
 
             timer += Time.fixedDeltaTime;
-            yield return new WaitForFixedUpdate(); // esperar al siguiente paso de física
+            yield return new WaitForFixedUpdate(); 
         }
 
-        // Seguridad por si invulnerableDuration >= dodgeDuration
         health.IsInvulnerable = false;
         SetAlpha(1f);
 
