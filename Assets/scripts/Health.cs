@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Health : MonoBehaviour
 {
@@ -19,15 +20,6 @@ public class Health : MonoBehaviour
         originalColor = spriteRenderer.color;
     }
 
-    private void Update()
-    {
-        if (CompareTag("Player") && Input.GetKeyDown(KeyCode.H))
-        {
-            TakeDamage(10f);
-        }
-    }
-    // =====================================================================
-
     public void TakeDamage(float amount)
     {
         if (IsInvulnerable)
@@ -37,6 +29,7 @@ public class Health : MonoBehaviour
         }
 
         currentHealth -= amount;
+        Debug.Log(name + " vida: " + currentHealth);
 
         StopAllCoroutines();
         StartCoroutine(Flash());
@@ -56,6 +49,13 @@ public class Health : MonoBehaviour
 
     private void Die()
     {
-        Destroy(gameObject);
+        if (CompareTag("Player"))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 }
