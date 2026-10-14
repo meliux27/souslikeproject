@@ -6,27 +6,31 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
 
     [Header("Salto")]
-    [SerializeField] private float jumpForce = 10f;           // NUEVO: velocidad inicial hacia arriba
-    [SerializeField] private Transform groundCheck;           // NUEVO: punto de los pies
-    [SerializeField] private float groundCheckRadius = 0.2f;  // NUEVO: tamaño del círculo de detección
-    [SerializeField] private LayerMask groundLayer;           // NUEVO: qué capa cuenta como suelo
+    [SerializeField] private float jumpForce = 10f;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundCheckRadius = 0.2f;
+    [SerializeField] private LayerMask groundLayer;
 
+    // Otros scripts (combate, esquive) pueden bloquear el movimiento
     public bool canMove = true;
 
+    // Mientras es true, este script no toca la velocidad (la controla el esquive)
     public bool isDodging = false;
 
     public bool FacingRight => facingRight;
-    public bool IsGrounded => isGrounded; // NUEVO: otros scripts pueden consultarlo
+    public bool IsGrounded => isGrounded;
 
     private Rigidbody2D rb;
+    private Knockback knockback; // NUEVO
     private float moveInput;
     private bool facingRight = true;
-    private bool isGrounded;       // NUEVO
-    private bool jumpRequested;    // NUEVO
+    private bool isGrounded;
+    private bool jumpRequested;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        knockback = GetComponent<Knockback>(); // NUEVO
     }
 
     private void Update()
@@ -52,6 +56,9 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (isDodging) return;
+
+        // NUEVO: si te están empujando, dejamos que la física actúe
+        if (knockback != null && knockback.IsKnockedBack) return;
 
         float yVelocity = rb.linearVelocity.y;
 

@@ -7,6 +7,7 @@ public class Health : MonoBehaviour
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private Color hitColor = Color.white;
 
+    // Cuando es true, TakeDamage no hace nada. El esquive lo enciende y apaga.
     public bool IsInvulnerable { get; set; }
 
     private float currentHealth;
@@ -20,12 +21,13 @@ public class Health : MonoBehaviour
         originalColor = spriteRenderer.color;
     }
 
-    public void TakeDamage(float amount)
+    // NUEVO: devuelve true si el daño se aplicó, false si fue esquivado
+    public bool TakeDamage(float amount)
     {
         if (IsInvulnerable)
         {
             Debug.Log(name + " esquivó el golpe");
-            return;
+            return false;
         }
 
         currentHealth -= amount;
@@ -38,6 +40,8 @@ public class Health : MonoBehaviour
         {
             Die();
         }
+
+        return true;
     }
 
     private IEnumerator Flash()
@@ -51,6 +55,7 @@ public class Health : MonoBehaviour
     {
         if (CompareTag("Player"))
         {
+            // Si muere el jugador, reiniciamos la escena
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
         else

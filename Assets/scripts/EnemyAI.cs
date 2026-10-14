@@ -17,15 +17,20 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float attackCooldown = 0.5f;
     [SerializeField] private Color telegraphColor = new Color(1f, 0.6f, 0f); // naranja
 
-    [Header("Aturdimiento (tras un parry)")]
-    [SerializeField] private float staggerDuration = 1.2f;                   // NUEVO
-    [SerializeField] private Color staggerColor = Color.yellow;              // NUEVO
+    [Header("Retroceso (Knockback)")]
+    [SerializeField] private float knockbackForce = 6f;       // NUEVO: cuánto empuja al jugador
+    [SerializeField] private float parryKnockbackForce = 6f;  // NUEVO: cuánto retrocede si le haces parry
 
-    // NUEVO: otros scripts (como PlayerCombat) pueden consultar si está aturdido
+    [Header("Aturdimiento (tras un parry)")]
+    [SerializeField] private float staggerDuration = 1.2f;
+    [SerializeField] private Color staggerColor = Color.yellow;
+
+    // Otros scripts (como PlayerCombat) pueden consultar si está aturdido
     public bool IsStaggered { get; private set; }
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
+    private Knockback selfKnockback; // NUEVO
     private Transform player;
     private Color originalColor;
     private bool isAttacking;
@@ -35,6 +40,7 @@ public class EnemyAI : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        selfKnockback = GetComponent<Knockback>(); // NUEVO
         originalColor = spriteRenderer.color;
 
         GameObject playerObject = GameObject.FindWithTag("Player");
@@ -64,6 +70,10 @@ public class EnemyAI : MonoBehaviour
     {
         if (player == null) return;
 
+        // NUEVO: si lo están empujando, dejamos que la física actúe
+        if (selfKnockback != null && selfKnockback.IsKnockedBack) return;
+
+        // Mientras ataca (o está aturdido, que ocurre dentro del ataque) se queda quieto
         if (isAttacking)
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -95,32 +105,52 @@ public class EnemyAI : MonoBehaviour
     {
         isAttacking = true;
 
+        // 1. Aviso: se pone naranja
         spriteRenderer.color = telegraphColor;
         yield return new WaitForSeconds(windUp);
         spriteRenderer.color = originalColor;
 
         float waitAfter = recovery;
 
+        // 2. Golpe: solo si sigues dentro del alcance
         if (player != null && Vector2.Distance(transform.position, player.position) <= attackHitRange)
         {
             PlayerParry parry = player.GetComponent<PlayerParry>();
 
             if (parry != null && parry.TryParry())
             {
+                // Parry exitoso: sin daño, el enemigo queda aturdido y retrocede
                 IsStaggered = true;
                 spriteRenderer.color = staggerColor;
                 waitAfter = staggerDuration;
+
+                // NUEVO
+                if (selfKnockback != null)
+                {
+                    selfKnockback.Apply(player.position, parryKnockbackForce);
+                }
             }
             else
             {
                 Health playerHealth = player.GetComponent<Health>();
                 if (playerHealth != null)
                 {
-                    playerHealth.TakeDamage(attackDamage);
+                    // NUEVO: solo empuja si el golpe realmente te alcanzó (no si lo esquivaste)
+                    bool damageApplied = playerHealth.TakeDamage(attackDamage);
+
+                    if (damageApplied)
+                    {
+                        Knockback playerKnockback = player.GetComponent<Knockback>();
+                        if (playerKnockback != null)
+                        {
+                            playerKnockback.Apply(transform.position, knockbackForce);
+                        }
+                    }
                 }
             }
         }
 
+        // 3. Recuperación (más larga si te hicieron parry)
         yield return new WaitForSeconds(waitAfter);
 
         spriteRenderer.color = originalColor;
