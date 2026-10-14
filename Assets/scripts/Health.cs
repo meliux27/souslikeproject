@@ -6,6 +6,8 @@ public class Health : MonoBehaviour
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private Color hitColor = Color.white;
 
+    public bool IsInvulnerable { get; set; }
+
     private float currentHealth;
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
@@ -17,8 +19,23 @@ public class Health : MonoBehaviour
         originalColor = spriteRenderer.color;
     }
 
+    private void Update()
+    {
+        if (CompareTag("Player") && Input.GetKeyDown(KeyCode.H))
+        {
+            TakeDamage(10f);
+        }
+    }
+    // =====================================================================
+
     public void TakeDamage(float amount)
     {
+        if (IsInvulnerable)
+        {
+            Debug.Log(name + " esquivó el golpe");
+            return;
+        }
+
         currentHealth -= amount;
 
         StopAllCoroutines();

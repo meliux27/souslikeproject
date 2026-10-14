@@ -7,6 +7,11 @@ public class PlayerMovement : MonoBehaviour
 
     public bool canMove = true;
 
+
+    public bool isDodging = false;
+
+    public bool FacingRight => facingRight;
+
     private Rigidbody2D rb;
     private float moveInput;
     private bool facingRight = true;
@@ -25,20 +30,26 @@ public class PlayerMovement : MonoBehaviour
         }
 
         moveInput = Input.GetAxisRaw("Horizontal");
-
-        if (moveInput > 0 && !facingRight)
-        {
-            Flip();
-        }
-        else if (moveInput < 0 && facingRight)
-        {
-            Flip();
-        }
+        FaceDirection(moveInput);
     }
 
     private void FixedUpdate()
     {
+        if (isDodging) return;
+
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+    }
+
+    public void FaceDirection(float direction)
+    {
+        if (direction > 0 && !facingRight)
+        {
+            Flip();
+        }
+        else if (direction < 0 && facingRight)
+        {
+            Flip();
+        }
     }
 
     private void Flip()

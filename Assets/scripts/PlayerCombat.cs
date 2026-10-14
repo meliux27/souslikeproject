@@ -32,7 +32,7 @@ public class PlayerCombat : MonoBehaviour
     {
         bool attackPressed = Input.GetKeyDown(KeyCode.J) || Input.GetMouseButtonDown(0);
 
-        if (attackPressed && !isAttacking)
+        if (attackPressed && !isAttacking && movement.canMove)
         {
             if (stamina.TryUse(attackStaminaCost))
             {
