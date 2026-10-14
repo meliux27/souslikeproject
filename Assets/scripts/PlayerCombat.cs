@@ -12,6 +12,7 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float attackRange = 0.6f;
     [SerializeField] private float attackDamage = 25f;
     [SerializeField] private float attackStaminaCost = 20f;
+    [SerializeField] private float riposteMultiplier = 2f; // daño extra contra un enemigo aturdido
 
     [Header("Tiempos del ataque (segundos)")]
     [SerializeField] private float windUp = 0.1f;    
@@ -60,7 +61,7 @@ public class PlayerCombat : MonoBehaviour
         isAttacking = false;
     }
 
-    private void DealDamage()
+       private void DealDamage()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayer);
 
@@ -69,7 +70,15 @@ public class PlayerCombat : MonoBehaviour
             Health health = hit.GetComponent<Health>();
             if (health != null)
             {
-                health.TakeDamage(attackDamage);
+                float damage = attackDamage;
+
+                EnemyAI enemy = hit.GetComponent<EnemyAI>();
+                if (enemy != null && enemy.IsStaggered)
+                {
+                    damage *= riposteMultiplier;
+                }
+
+                health.TakeDamage(damage);
             }
         }
     }

@@ -4,18 +4,25 @@ using UnityEngine;
 public class EnemyAI : MonoBehaviour
 {
     [Header("Detección y movimiento")]
-    [SerializeField] private float detectionRange = 7f;   // a esta distancia te empieza a perseguir
+    [SerializeField] private float detectionRange = 7f;
     [SerializeField] private float moveSpeed = 2.5f;
-    [SerializeField] private float stopDistance = 1.2f;   // se detiene a esta distancia de ti
+    [SerializeField] private float stopDistance = 1.2f;
 
     [Header("Ataque")]
-    [SerializeField] private float attackTriggerRange = 1.5f; // empieza a atacar si estás a esta distancia
-    [SerializeField] private float attackHitRange = 1.7f;     // el golpe te alcanza si sigues a esta distancia
+    [SerializeField] private float attackTriggerRange = 1.5f;
+    [SerializeField] private float attackHitRange = 1.7f;
     [SerializeField] private float attackDamage = 20f;
-    [SerializeField] private float windUp = 0.6f;             // aviso antes del golpe (tu ventana para esquivar)
-    [SerializeField] private float recovery = 0.8f;           // queda expuesto después de golpear
+    [SerializeField] private float windUp = 0.6f;
+    [SerializeField] private float recovery = 0.8f;
     [SerializeField] private float attackCooldown = 0.5f;
     [SerializeField] private Color telegraphColor = new Color(1f, 0.6f, 0f); // naranja
+
+    [Header("Aturdimiento (tras un parry)")]
+    [SerializeField] private float staggerDuration = 1.2f;                   // NUEVO
+    [SerializeField] private Color staggerColor = Color.yellow;              // NUEVO
+
+    // NUEVO: otros scripts (como PlayerCombat) pueden consultar si está aturdido
+    public bool IsStaggered { get; private set; }
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -41,7 +48,6 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // Update: decide cuándo atacar
     private void Update()
     {
         if (player == null || isAttacking) return;
@@ -54,12 +60,10 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // FixedUpdate: decide cómo moverse (física)
     private void FixedUpdate()
     {
         if (player == null) return;
 
-        // Mientras ataca se queda quieto
         if (isAttacking)
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -69,7 +73,6 @@ public class EnemyAI : MonoBehaviour
         float dx = player.position.x - transform.position.x;
         float distance = Mathf.Abs(dx);
 
-        // Muy lejos: no hace nada
         if (distance > detectionRange)
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -80,12 +83,10 @@ public class EnemyAI : MonoBehaviour
 
         if (distance > stopDistance)
         {
-            // Perseguir
             rb.linearVelocity = new Vector2(Mathf.Sign(dx) * moveSpeed, rb.linearVelocity.y);
         }
         else
         {
-            // Ya está cerca: se detiene
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
         }
     }
@@ -94,24 +95,36 @@ public class EnemyAI : MonoBehaviour
     {
         isAttacking = true;
 
-        // 1. Aviso: se pone naranja
         spriteRenderer.color = telegraphColor;
         yield return new WaitForSeconds(windUp);
         spriteRenderer.color = originalColor;
 
-        // 2. Golpe: solo daña si sigues dentro del alcance
+        float waitAfter = recovery;
+
         if (player != null && Vector2.Distance(transform.position, player.position) <= attackHitRange)
         {
-            Health playerHealth = player.GetComponent<Health>();
-            if (playerHealth != null)
+            PlayerParry parry = player.GetComponent<PlayerParry>();
+
+            if (parry != null && parry.TryParry())
             {
-                playerHealth.TakeDamage(attackDamage);
+                IsStaggered = true;
+                spriteRenderer.color = staggerColor;
+                waitAfter = staggerDuration;
+            }
+            else
+            {
+                Health playerHealth = player.GetComponent<Health>();
+                if (playerHealth != null)
+                {
+                    playerHealth.TakeDamage(attackDamage);
+                }
             }
         }
 
-        // 3. Recuperación: queda vulnerable
-        yield return new WaitForSeconds(recovery);
+        yield return new WaitForSeconds(waitAfter);
 
+        spriteRenderer.color = originalColor;
+        IsStaggered = false;
         nextAttackTime = Time.time + attackCooldown;
         isAttacking = false;
     }
@@ -123,7 +136,6 @@ public class EnemyAI : MonoBehaviour
         transform.localScale = scale;
     }
 
-    // Dibuja los rangos en la ventana Scene cuando seleccionas el enemigo
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
