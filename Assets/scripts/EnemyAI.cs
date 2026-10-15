@@ -159,18 +159,10 @@ public class EnemyAI : MonoBehaviour
         isAttacking = false;
     }
 
-    private void FaceTarget(float dx)
+        private void FaceTarget(float dx)
     {
-        Vector3 scale = transform.localScale;
-        scale.x = Mathf.Abs(scale.x) * Mathf.Sign(dx);
-        transform.localScale = scale;
+        // flipX voltea solo el dibujo, no la escala: así la barra de vida hija no se refleja
+        spriteRenderer.flipX = dx < 0f;
     }
 
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackHitRange);
-    }
 }

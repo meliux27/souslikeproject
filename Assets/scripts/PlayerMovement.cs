@@ -11,17 +11,16 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
-    // Otros scripts (combate, esquive) pueden bloquear el movimiento
     public bool canMove = true;
 
-    // Mientras es true, este script no toca la velocidad (la controla el esquive)
     public bool isDodging = false;
 
     public bool FacingRight => facingRight;
     public bool IsGrounded => isGrounded;
 
     private Rigidbody2D rb;
-    private Knockback knockback; // NUEVO
+    private Knockback knockback;
+    private Animator animator; // NUEVO
     private float moveInput;
     private bool facingRight = true;
     private bool isGrounded;
@@ -30,34 +29,37 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        knockback = GetComponent<Knockback>(); // NUEVO
+        knockback = GetComponent<Knockback>();
+        animator = GetComponent<Animator>(); // NUEVO
     }
 
     private void Update()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        if (!canMove)
+        if (canMove)
+        {
+            moveInput = Input.GetAxisRaw("Horizontal");
+            FaceDirection(moveInput);
+
+            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            {
+                jumpRequested = true;
+            }
+        }
+        else
         {
             moveInput = 0f;
             jumpRequested = false;
-            return;
         }
 
-        moveInput = Input.GetAxisRaw("Horizontal");
-        FaceDirection(moveInput);
-
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-        {
-            jumpRequested = true;
-        }
+        UpdateAnimator(); // NUEVO
     }
 
     private void FixedUpdate()
     {
         if (isDodging) return;
 
-        // NUEVO: si te están empujando, dejamos que la física actúe
         if (knockback != null && knockback.IsKnockedBack) return;
 
         float yVelocity = rb.linearVelocity.y;
@@ -69,6 +71,16 @@ public class PlayerMovement : MonoBehaviour
         }
 
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, yVelocity);
+    }
+
+    // NUEVO: le pasa al Animator el estado actual del jugador
+    private void UpdateAnimator()
+    {
+        if (animator == null) return;
+
+        animator.SetBool("IsWalking", moveInput != 0f);
+        animator.SetBool("IsGrounded", isGrounded);
+        animator.SetFloat("YVelocity", rb.linearVelocity.y);
     }
 
     public void FaceDirection(float direction)
