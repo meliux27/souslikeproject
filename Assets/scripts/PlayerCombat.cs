@@ -5,7 +5,7 @@ public class PlayerCombat : MonoBehaviour
 {
     [Header("Referencias")]
     [SerializeField] private Transform attackPoint;
-    [SerializeField] private SpriteRenderer slashEffect;
+    [SerializeField] private SpriteRenderer slashEffect; // opcional: puede quedar vacío
     [SerializeField] private LayerMask enemyLayer;
 
     [Header("Ataque")]
@@ -13,21 +13,23 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private float attackDamage = 25f;
     [SerializeField] private float attackStaminaCost = 20f;
     [SerializeField] private float riposteMultiplier = 2f;
-    [SerializeField] private float knockbackForce = 5f; // NUEVO: cuánto empuja al enemigo
+    [SerializeField] private float knockbackForce = 5f;
 
     [Header("Tiempos del ataque (segundos)")]
-    [SerializeField] private float windUp = 0.1f;
+    [SerializeField] private float windUp = 0.2f;     // hasta el momento del golpe en la animación
     [SerializeField] private float activeTime = 0.1f;
-    [SerializeField] private float recovery = 0.25f;
+    [SerializeField] private float recovery = 0.2f;
 
     private PlayerStamina stamina;
     private PlayerMovement movement;
+    private Animator animator; // NUEVO
     private bool isAttacking;
 
     private void Awake()
     {
         stamina = GetComponent<PlayerStamina>();
         movement = GetComponent<PlayerMovement>();
+        animator = GetComponent<Animator>(); // NUEVO
     }
 
     private void Update()
@@ -48,13 +50,26 @@ public class PlayerCombat : MonoBehaviour
         isAttacking = true;
         movement.canMove = false;
 
+        // NUEVO: arranca la animación de ataque
+        if (animator != null)
+        {
+            animator.SetTrigger("Attack");
+        }
+
         yield return new WaitForSeconds(windUp);
 
-        slashEffect.enabled = true;
+        if (slashEffect != null)
+        {
+            slashEffect.enabled = true;
+        }
         DealDamage();
 
         yield return new WaitForSeconds(activeTime);
-        slashEffect.enabled = false;
+
+        if (slashEffect != null)
+        {
+            slashEffect.enabled = false;
+        }
 
         yield return new WaitForSeconds(recovery);
 
@@ -73,7 +88,6 @@ public class PlayerCombat : MonoBehaviour
             {
                 float damage = attackDamage;
 
-                // Riposte: daño extra si el enemigo está aturdido
                 EnemyAI enemy = hit.GetComponent<EnemyAI>();
                 if (enemy != null && enemy.IsStaggered)
                 {
@@ -82,7 +96,6 @@ public class PlayerCombat : MonoBehaviour
 
                 bool damageApplied = health.TakeDamage(damage);
 
-                // NUEVO: empujar al enemigo si el golpe conectó
                 if (damageApplied)
                 {
                     Knockback knockback = hit.GetComponent<Knockback>();

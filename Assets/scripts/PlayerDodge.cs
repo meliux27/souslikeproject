@@ -8,13 +8,14 @@ public class PlayerDodge : MonoBehaviour
     [SerializeField] private float dodgeDuration = 0.35f;        // duración total del rodar
     [SerializeField] private float invulnerableDuration = 0.25f; // parte del rodar en que eres intocable
     [SerializeField] private float dodgeStaminaCost = 25f;
-    [SerializeField] private float dodgeCooldown = 0.2f;         // pausa antes de poder rodar de nuevo
+    [SerializeField] private float dodgeCooldown = 0.2f;
 
     private Rigidbody2D rb;
     private PlayerMovement movement;
     private PlayerStamina stamina;
     private Health health;
     private SpriteRenderer spriteRenderer;
+    private Animator animator; // NUEVO
 
     private Color originalColor;
     private bool isDodging;
@@ -27,6 +28,7 @@ public class PlayerDodge : MonoBehaviour
         stamina = GetComponent<PlayerStamina>();
         health = GetComponent<Health>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>(); // NUEVO
         originalColor = spriteRenderer.color;
     }
 
@@ -43,11 +45,26 @@ public class PlayerDodge : MonoBehaviour
         }
     }
 
+    // NUEVO: si el script se desactiva (por ejemplo al morir), apagamos la animación de esquive
+    private void OnDisable()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsDodging", false);
+        }
+    }
+
     private IEnumerator Dodge()
     {
         isDodging = true;
-        movement.canMove = false;   
-        movement.isDodging = true;  
+        movement.canMove = false;
+        movement.isDodging = true;
+
+        // NUEVO
+        if (animator != null)
+        {
+            animator.SetBool("IsDodging", true);
+        }
 
         float direction = Input.GetAxisRaw("Horizontal");
         if (direction == 0f)
@@ -71,7 +88,7 @@ public class PlayerDodge : MonoBehaviour
             }
 
             timer += Time.fixedDeltaTime;
-            yield return new WaitForFixedUpdate(); 
+            yield return new WaitForFixedUpdate();
         }
 
         health.IsInvulnerable = false;
@@ -80,6 +97,12 @@ public class PlayerDodge : MonoBehaviour
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
         movement.isDodging = false;
         movement.canMove = true;
+
+        // NUEVO
+        if (animator != null)
+        {
+            animator.SetBool("IsDodging", false);
+        }
 
         nextDodgeTime = Time.time + dodgeCooldown;
         isDodging = false;

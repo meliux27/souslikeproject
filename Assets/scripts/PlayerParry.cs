@@ -13,6 +13,7 @@ public class PlayerParry : MonoBehaviour
     private PlayerMovement movement;
     private PlayerStamina stamina;
     private SpriteRenderer spriteRenderer;
+    private Animator animator; // NUEVO
     private Color originalColor;
 
     private bool windowActive;
@@ -24,6 +25,7 @@ public class PlayerParry : MonoBehaviour
         movement = GetComponent<PlayerMovement>();
         stamina = GetComponent<PlayerStamina>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>(); // NUEVO
         originalColor = spriteRenderer.color;
     }
 
@@ -40,6 +42,17 @@ public class PlayerParry : MonoBehaviour
         }
     }
 
+    // NUEVO: si el script se desactiva (por ejemplo al morir), apagamos la animación de parry
+    private void OnDisable()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsParrying", false);
+        }
+    }
+
+    // El enemigo llama a esta función justo antes de golpear.
+    // Devuelve true si el golpe fue bloqueado.
     public bool TryParry()
     {
         if (!windowActive) return false;
@@ -53,7 +66,13 @@ public class PlayerParry : MonoBehaviour
     {
         isParrying = true;
         parrySucceeded = false;
-        movement.canMove = false; 
+        movement.canMove = false;
+
+        // NUEVO
+        if (animator != null)
+        {
+            animator.SetBool("IsParrying", true);
+        }
 
         windowActive = true;
         spriteRenderer.color = parryColor;
@@ -62,6 +81,12 @@ public class PlayerParry : MonoBehaviour
         spriteRenderer.color = originalColor;
 
         yield return new WaitForSeconds(parrySucceeded ? successRecovery : failRecovery);
+
+        // NUEVO
+        if (animator != null)
+        {
+            animator.SetBool("IsParrying", false);
+        }
 
         movement.canMove = true;
         isParrying = false;

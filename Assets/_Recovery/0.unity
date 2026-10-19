@@ -1344,7 +1344,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   attackPoint: {fileID: 330422115}
-  slashEffect: {fileID: 330422114}
+  slashEffect: {fileID: 0}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -1353,9 +1353,9 @@ MonoBehaviour:
   attackStaminaCost: 20
   riposteMultiplier: 2
   knockbackForce: 5
-  windUp: 0.1
+  windUp: 0.2
   activeTime: 0.1
-  recovery: 0.25
+  recovery: 0.2
 --- !u!114 &834001517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1387,6 +1387,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 250
   hitColor: {r: 1, g: 1, b: 1, a: 1}
+  deathDelay: 2
 --- !u!114 &834001519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2014,6 +2015,10 @@ PrefabInstance:
     - target: {fileID: 5337211335728477897, guid: 578bbc14a03752647863f9fcb44a23ef, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6707893075564716565, guid: 578bbc14a03752647863f9fcb44a23ef, type: 3}
+      propertyPath: attackDamage
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 7995974666957387780, guid: 578bbc14a03752647863f9fcb44a23ef, type: 3}
       propertyPath: m_SortingLayer
